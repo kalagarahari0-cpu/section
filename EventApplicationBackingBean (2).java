@@ -4052,6 +4052,8 @@ public void onModelChange() throws SQLException{
 			BigDecimal newValue = null;
 			Integer strNewVal = null;
 			Integer strOldVal = null;
+			String strOldStringVal = null;
+			String strNewStringVal = null;
 			
 		 if(event.getOldValue() instanceof BigDecimal && event.getNewValue() instanceof BigDecimal) {
 				oldValue = (BigDecimal)event.getOldValue();
@@ -4059,6 +4061,9 @@ public void onModelChange() throws SQLException{
 			}else if (event.getOldValue() instanceof Number && event.getNewValue() instanceof Number) {
 				strNewVal = (Integer)event.getOldValue();
 				strOldVal = (Integer)event.getNewValue();
+			}else if (event.getOldValue() instanceof String || event.getNewValue() instanceof String) {
+				strOldStringVal = event.getOldValue() != null ? (String)event.getOldValue() : "";
+				strNewStringVal = event.getNewValue() != null ? (String)event.getNewValue() : "";
 			}else if (event.getOldValue() instanceof ArrayList && event.getNewValue() instanceof ArrayList) {
 				if(((ArrayList)event.getOldValue()).get(0) instanceof BigDecimal && ((ArrayList)event.getNewValue()).get(0) instanceof BigDecimal) {
 					oldValue = (BigDecimal)((ArrayList)event.getOldValue()).get(0);
@@ -4069,7 +4074,17 @@ public void onModelChange() throws SQLException{
 				}
 			}
 
-		 if((null!=oldValue && newValue!= null && oldValue.compareTo(newValue) !=0) || (null!=strOldVal && strNewVal!= null && !strNewVal.equals(strOldVal))){	
+		 // Check if any value actually changed (BigDecimal, Integer, or String)
+		 boolean valueChanged = false;
+		 if(null!=oldValue && newValue!= null && oldValue.compareTo(newValue) !=0){
+			 valueChanged = true;
+		 } else if(null!=strOldVal && strNewVal!= null && !strNewVal.equals(strOldVal)){
+			 valueChanged = true;
+		 } else if(strOldStringVal != null && strNewStringVal != null && !strOldStringVal.equals(strNewStringVal)){
+			 valueChanged = true;
+		 }
+
+		 if(valueChanged){	
 				m_bolApplyEnabled = true;
 				RequestContext.getCurrentInstance().update("searchEventApplicationForm:applyBtn");
 				
@@ -4081,6 +4096,15 @@ public void onModelChange() throws SQLException{
 				}else{
 					
 					strEditedRowKeyId = String.valueOf(event.getRowIndex());
+				}
+				
+				// For Section change: preserve old section value for the WHERE clause in the update SQL
+				if(strOldStringVal != null && strNewStringVal != null && !strOldStringVal.equals(strNewStringVal)){
+					EventApplicationDVO editedRow = m_eventApplicationList.get(event.getRowIndex());
+					// Only set oldDesignSection if not already set (first edit wins)
+					if(editedRow.getM_strOldDesignSection() == null || editedRow.getM_strOldDesignSection().trim().isEmpty()){
+						editedRow.setM_strOldDesignSection(strOldStringVal);
+					}
 				}
 				
 				m_hmpSelectedEventApplicationDetails.put(strEditedRowKeyId, m_eventApplicationList.get(event.getRowIndex()));
