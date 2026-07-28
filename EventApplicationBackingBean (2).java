@@ -2801,6 +2801,14 @@ public void onModelChange() throws SQLException{
 				ListDVO outDVO = (ListDVO)responseDVO.getM_abstractDVO();
 				m_eventApplicationList = outDVO.getList();
 				
+				// Initialize oldDesignSection for each row so inline section changes can be tracked
+				if(m_eventApplicationList != null){
+					for(int i = 0; i < m_eventApplicationList.size(); i++){
+						EventApplicationDVO row = (EventApplicationDVO) m_eventApplicationList.get(i);
+						row.setM_strOldDesignSection(row.getM_strDesignSection());
+					}
+				}
+				
 				//m_bolApplyEnabled = false;
 				
 				if(m_eventApplicationList != null && m_eventApplicationList.size() > 0){
@@ -4052,6 +4060,8 @@ public void onModelChange() throws SQLException{
 			BigDecimal newValue = null;
 			Integer strNewVal = null;
 			Integer strOldVal = null;
+			String strOldStringVal = null;
+			String strNewStringVal = null;
 			
 		 if(event.getOldValue() instanceof BigDecimal && event.getNewValue() instanceof BigDecimal) {
 				oldValue = (BigDecimal)event.getOldValue();
@@ -4059,6 +4069,9 @@ public void onModelChange() throws SQLException{
 			}else if (event.getOldValue() instanceof Number && event.getNewValue() instanceof Number) {
 				strNewVal = (Integer)event.getOldValue();
 				strOldVal = (Integer)event.getNewValue();
+			}else if (event.getOldValue() instanceof String || event.getNewValue() instanceof String) {
+				strOldStringVal = event.getOldValue() != null ? (String)event.getOldValue() : "";
+				strNewStringVal = event.getNewValue() != null ? (String)event.getNewValue() : "";
 			}else if (event.getOldValue() instanceof ArrayList && event.getNewValue() instanceof ArrayList) {
 				if(((ArrayList)event.getOldValue()).get(0) instanceof BigDecimal && ((ArrayList)event.getNewValue()).get(0) instanceof BigDecimal) {
 					oldValue = (BigDecimal)((ArrayList)event.getOldValue()).get(0);
@@ -4069,7 +4082,17 @@ public void onModelChange() throws SQLException{
 				}
 			}
 
-		 if((null!=oldValue && newValue!= null && oldValue.compareTo(newValue) !=0) || (null!=strOldVal && strNewVal!= null && !strNewVal.equals(strOldVal))){	
+		 // Check if any value actually changed (BigDecimal, Integer, or String)
+		 boolean valueChanged = false;
+		 if(null!=oldValue && newValue!= null && oldValue.compareTo(newValue) !=0){
+			 valueChanged = true;
+		 } else if(null!=strOldVal && strNewVal!= null && !strNewVal.equals(strOldVal)){
+			 valueChanged = true;
+		 } else if(strOldStringVal != null && strNewStringVal != null && !strOldStringVal.equals(strNewStringVal)){
+			 valueChanged = true;
+		 }
+
+		 if(valueChanged){	
 				m_bolApplyEnabled = true;
 				RequestContext.getCurrentInstance().update("searchEventApplicationForm:applyBtn");
 				
@@ -4083,11 +4106,23 @@ public void onModelChange() throws SQLException{
 					strEditedRowKeyId = String.valueOf(event.getRowIndex());
 				}
 				
+				// For Section change: preserve old section value for the WHERE clause in the update SQL
+				if(strOldStringVal != null && strNewStringVal != null && !strOldStringVal.equals(strNewStringVal)){
+					EventApplicationDVO editedRow = m_eventApplicationList.get(event.getRowIndex());
+					// Only set oldDesignSection if not already set (first edit wins)
+					if(editedRow.getM_strOldDesignSection() == null || editedRow.getM_strOldDesignSection().trim().isEmpty()){
+						editedRow.setM_strOldDesignSection(strOldStringVal);
+					}
+				}
+				
 				m_hmpSelectedEventApplicationDetails.put(strEditedRowKeyId, m_eventApplicationList.get(event.getRowIndex()));
 				m_eventApplicationList.get(event.getRowIndex()).setM_strEditedRowKeyId(String.valueOf(event.getRowIndex()));
 				
 			} else{
-				m_bolApplyEnabled = false;
+				// Only disable Apply if there are no other pending changes tracked
+				if(m_hmpSelectedEventApplicationDetails == null || m_hmpSelectedEventApplicationDetails.size() == 0){
+					m_bolApplyEnabled = false;
+				}
 				RequestContext.getCurrentInstance().update("searchEventApplicationForm:applyBtn");
 			}
 		 logger.debug("\n Exiting onEventApplicationsCellEdit() ");
@@ -4251,6 +4286,61 @@ public void onModelChange() throws SQLException{
 		}
 		
 		logger.debug("\n Exiting onQtyOrRateChange() ");	
+	}
+
+	/**
+	 * This method is called when the Section dropdown is changed inline in the grid.
+	 * It enables the Apply button and tracks the changed row in m_hmpSelectedEventApplicationDetails
+	 * so that clicking Apply will persist the section change to the database.
+	 */
+	public void onSectionChangeInGrid(){
+		
+		logger.debug("\n Entering onSectionChangeInGrid() ");
+		
+		// Get the current row from the datatable
+		if(m_dtEventApplicationTable != null){
+			EventApplicationDVO editedRow = (EventApplicationDVO) m_dtEventApplicationTable.getRowData();
+			
+			if(editedRow != null){
+				// Preserve the old section value for the SQL WHERE clause (first edit wins)
+				if(editedRow.getM_strOldDesignSection() == null || editedRow.getM_strOldDesignSection().trim().isEmpty()){
+					// The current value in the DVO has already been updated by JSF to the NEW value.
+					// We need the OLD value. Since JSF already set the new value, we check if we stored it before.
+					// If not stored yet, we cannot recover it here - rely on cellEdit event.
+					// However, since cellEdit may not fire for selectOneMenu in older PrimeFaces,
+					// we use a different approach: store the old value BEFORE the ajax processes @this.
+					// Unfortunately at this point JSF has already updated the model.
+					// WORKAROUND: We'll track which rows were section-edited and let the DAO handle
+					// the case where oldDesignSection equals the current (new) designSection.
+				}
+				
+				// Enable the Apply button
+				m_bolApplyEnabled = true;
+				
+				// Determine the row index / key
+				String strEditedRowKeyId = null;
+				if(editedRow.getM_strEditedRowKeyId() != null){
+					strEditedRowKeyId = editedRow.getM_strEditedRowKeyId();
+				} else {
+					// Find the index of this row in the list
+					int rowIndex = m_eventApplicationList.indexOf(editedRow);
+					if(rowIndex >= 0){
+						strEditedRowKeyId = String.valueOf(rowIndex);
+						editedRow.setM_strEditedRowKeyId(strEditedRowKeyId);
+					} else {
+						strEditedRowKeyId = String.valueOf(System.currentTimeMillis());
+						editedRow.setM_strEditedRowKeyId(strEditedRowKeyId);
+					}
+				}
+				
+				// Add to the tracking map so applyButtonClick finds it
+				m_hmpSelectedEventApplicationDetails.put(strEditedRowKeyId, editedRow);
+				
+				RequestContext.getCurrentInstance().update("searchEventApplicationForm:applyBtn");
+			}
+		}
+		
+		logger.debug("\n Exiting onSectionChangeInGrid() ");
 	}
 
 	public static Logger getLogger() {
