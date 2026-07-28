@@ -340,6 +340,12 @@
 
                 <f:selectItems value="#{eventApplicationBackingBean.m_hmpDesignSection}" />
 
+                <p:ajax event="change"
+                        process="@this"
+                        listener="#{eventApplicationBackingBean.onSectionChangeInGrid}"
+                        update=":searchEventApplicationForm:applyBtn"
+                        global="false"/>
+
             </p:selectOneMenu>
 
         </f:facet>

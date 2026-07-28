@@ -2801,6 +2801,14 @@ public void onModelChange() throws SQLException{
 				ListDVO outDVO = (ListDVO)responseDVO.getM_abstractDVO();
 				m_eventApplicationList = outDVO.getList();
 				
+				// Initialize oldDesignSection for each row so inline section changes can be tracked
+				if(m_eventApplicationList != null){
+					for(int i = 0; i < m_eventApplicationList.size(); i++){
+						EventApplicationDVO row = (EventApplicationDVO) m_eventApplicationList.get(i);
+						row.setM_strOldDesignSection(row.getM_strDesignSection());
+					}
+				}
+				
 				//m_bolApplyEnabled = false;
 				
 				if(m_eventApplicationList != null && m_eventApplicationList.size() > 0){
@@ -4275,6 +4283,61 @@ public void onModelChange() throws SQLException{
 		}
 		
 		logger.debug("\n Exiting onQtyOrRateChange() ");	
+	}
+
+	/**
+	 * This method is called when the Section dropdown is changed inline in the grid.
+	 * It enables the Apply button and tracks the changed row in m_hmpSelectedEventApplicationDetails
+	 * so that clicking Apply will persist the section change to the database.
+	 */
+	public void onSectionChangeInGrid(){
+		
+		logger.debug("\n Entering onSectionChangeInGrid() ");
+		
+		// Get the current row from the datatable
+		if(m_dtEventApplicationTable != null){
+			EventApplicationDVO editedRow = (EventApplicationDVO) m_dtEventApplicationTable.getRowData();
+			
+			if(editedRow != null){
+				// Preserve the old section value for the SQL WHERE clause (first edit wins)
+				if(editedRow.getM_strOldDesignSection() == null || editedRow.getM_strOldDesignSection().trim().isEmpty()){
+					// The current value in the DVO has already been updated by JSF to the NEW value.
+					// We need the OLD value. Since JSF already set the new value, we check if we stored it before.
+					// If not stored yet, we cannot recover it here - rely on cellEdit event.
+					// However, since cellEdit may not fire for selectOneMenu in older PrimeFaces,
+					// we use a different approach: store the old value BEFORE the ajax processes @this.
+					// Unfortunately at this point JSF has already updated the model.
+					// WORKAROUND: We'll track which rows were section-edited and let the DAO handle
+					// the case where oldDesignSection equals the current (new) designSection.
+				}
+				
+				// Enable the Apply button
+				m_bolApplyEnabled = true;
+				
+				// Determine the row index / key
+				String strEditedRowKeyId = null;
+				if(editedRow.getM_strEditedRowKeyId() != null){
+					strEditedRowKeyId = editedRow.getM_strEditedRowKeyId();
+				} else {
+					// Find the index of this row in the list
+					int rowIndex = m_eventApplicationList.indexOf(editedRow);
+					if(rowIndex >= 0){
+						strEditedRowKeyId = String.valueOf(rowIndex);
+						editedRow.setM_strEditedRowKeyId(strEditedRowKeyId);
+					} else {
+						strEditedRowKeyId = String.valueOf(System.currentTimeMillis());
+						editedRow.setM_strEditedRowKeyId(strEditedRowKeyId);
+					}
+				}
+				
+				// Add to the tracking map so applyButtonClick finds it
+				m_hmpSelectedEventApplicationDetails.put(strEditedRowKeyId, editedRow);
+				
+				RequestContext.getCurrentInstance().update("searchEventApplicationForm:applyBtn");
+			}
+		}
+		
+		logger.debug("\n Exiting onSectionChangeInGrid() ");
 	}
 
 	public static Logger getLogger() {
