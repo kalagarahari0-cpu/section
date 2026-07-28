@@ -1,0 +1,659 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	
+<h:head>
+<title>Event Part Application Search</title>
+<f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+ </f:facet>
+  <f:metadata>
+    	<f:event type="preRenderView" listener="#{eventApplicationBackingBean.onPageload}" />
+	</f:metadata>
+<style>
+.topAligned {
+    vertical-align: top;
+}
+.centerAligned {
+    vertical-align: middle;
+     
+}
+ </style>
+ <script>
+ 	
+ 	
+	function isGridEmpty(src){
+	
+	 	var gridEmpty = document.getElementById('searchEventApplicationForm:isGridEmpty').value;
+	
+		if(gridEmpty == 'false'){
+		
+			if(src != 'FIND_NOW')
+				return true;
+			//else
+			//	document.getElementById('copyDiv').style.visibility = "visible";
+				
+		} else if(gridEmpty == 'true'){
+		
+			if(src != 'FIND_NOW')
+					return false;
+				//else
+				//	document.getElementById('copyDiv').style.visibility = "hidden";
+		}
+		
+	
+	}
+	
+	
+	function addNewClick(){
+	
+		alert('To add multiple types for a model, leave  the type blank and press the \'Apply\'  button. To add one new model and type, change the model and/or type and click the \'Apply\'  button in the following Detail Screen.');
+		
+	}
+	
+ 	function preValidationFindNow(){
+ 	
+ 		if(document.getElementById('searchEventApplicationForm:eventName_input').value == ''){
+ 		
+ 			alert('Event Name is required');
+ 			return false;
+ 		} else 
+ 			return true;
+ 	}
+ </script>
+</h:head>
+<h:body>
+	<h:form id="searchEventApplicationForm" styleClass="mainForm">
+	<script>
+ 	$( document ).ready(function() {
+		 $("#table_div_eventApplicationsTable").keydown(function(event) {
+		 
+		    if (event.which === 38) {
+		        event.preventDefault();
+		        up('eventApplicationsTable','searchEventApplicationForm','eventApplicationsTable',8);
+		    }
+
+		    if (event.which === 40) {
+		        event.preventDefault();
+		        down('eventApplicationsTable','searchEventApplicationForm','eventApplicationsTable',8);
+		    }
+		});
+ 	});
+ 	</script>
+	<h:inputHidden id="isGridEmpty" value="#{eventApplicationBackingBean.m_bolIsGridEmpty}"/>
+	<div id="container">
+	<ui:insert name="header">
+			<ui:include src="header.xhtml" />
+	</ui:insert>
+	<div style="clear:both;height:5px;"></div>
+	<div class="breakcrumb" >
+			<p:commandLink id="home" onclick="window.location.href = 'redirecttohome.xhtml'" >Home</p:commandLink>
+        	<h:outputText value=" >> " />
+        	<h:outputText value="Event Processing" />
+        	<h:outputText value=" >> " />
+        	<h:outputText value="Event Applications" />
+	</div>
+	<div style="clear:both;height:5px;"></div>
+	<p:panel id="commonPanel" header="Event Part Application" style="margin-bottom:10px;">
+		<p:focus id="formFocusID" for="searchEventApplicationForm:eventName" />
+        <p:messages id="messages" closable="true" autoUpdate="false"/>
+        <h:inputHidden id="eventRevisionNo" value="#{eventApplicationBackingBean.m_decEventRevisionNo}"/>
+        <p:remoteCommand name="updateSortedList" update=":searchEventApplicationForm:eventApplicationsTable" 
+		actionListener="#{eventApplicationBackingBean.sortListner('SEARCH_EVENT_APP' , 'EVENT_APP_SEARCH_LIST')}"
+		oncomplete="autoScroll('searchEventApplicationForm' , 'eventApplicationsTable' ); "/>
+		
+        <h:panelGrid styleClass="searchWrapper" columns="2" cellpadding="5" style="width:100%">
+        
+        <h:panelGrid columns="4" cellpadding="5" styleClass="searchTable leftSearchTable" >
+            <h:outputLabel for="eventName" value="Event Name" styleClass="required"/>
+	        <p:selectOneMenu id="eventName" widgetVar="eventNameDD" value="#{eventApplicationBackingBean.m_strDummyEventName}" styleClass="nonEditableDD dd150px" filter="true" filterMatchMode="startsWith" tabindex="1">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpEventName}" />
+				<p:ajax listener="#{eventApplicationBackingBean.onEventNameChange}" process="@form" update="eventRevisionNo , eventDesc , model , mtcType , mtcOption " />
+			</p:selectOneMenu>	
+ 
+            <h:outputLabel for="designSection" value="Design Section" />
+            <p:selectOneMenu id="designSection" value="#{eventApplicationBackingBean.m_strDesignSection}" styleClass="nonEditableDD dd250px" filter="true" filterMatchMode="startsWith" tabindex="8">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpDesignSection}" />
+			</p:selectOneMenu>
+			
+			<h:outputLabel for="eventDesc" value="" />
+			<h:inputText id="eventDesc" value="#{eventApplicationBackingBean.m_strEventNameDesc}" readonly="true" style="width : 320px"/>
+ 
+ 			<h:outputLabel for="procSection" value="Proc Section" />
+            <p:selectOneMenu id="procSection" value="#{eventApplicationBackingBean.m_procSection}" styleClass="nonEditableDD dd250px" filter="true" filterMatchMode="startsWith" tabindex="9">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpProcSection}" />
+			</p:selectOneMenu>
+			
+			<h:outputLabel for="partNum" value="Part Number" styleClass="required"/>
+			<h:panelGroup>
+			<h:inputText id="partNum" value="#{eventApplicationBackingBean.m_strPartNumber}" style="width : 150px" tabindex="2"/>
+			<p:commandButton value="..." id="partLookup" actionListener="#{eventApplicationBackingBean.openPartLookup(true)}" ajax="true" styleClass="lookupButton" 
+			 update=":partLookup" oncomplete="PF('partLookup').show()" tabindex="3"/>
+			</h:panelGroup>
+			
+			<h:outputLabel for="featureCode" value="Feature Code" />
+            <p:selectOneMenu id="featureCode" value="#{eventApplicationBackingBean.m_strFeatureCode}" styleClass="nonEditableDD dd250px" filter="true" filterMatchMode="startsWith" tabindex="10">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpFeatureCode}" />
+			</p:selectOneMenu>
+			
+			<h:outputLabel for="partColor" value="Part Color" />
+            <p:selectOneMenu id="partColor" value="#{eventApplicationBackingBean.m_strPartColor}" styleClass="nonEditableDD dd150px" filter="true" filterMatchMode="startsWith" tabindex="4">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpPartColor}" />
+			</p:selectOneMenu>
+			
+			<h:outputLabel for="model" value="Model" />
+            <p:selectOneMenu id="model" value="#{eventApplicationBackingBean.m_strModel}" styleClass="nonEditableDD" filter="true" filterMatchMode="startsWith" tabindex="11">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpModel}" />
+				<p:ajax listener="#{eventApplicationBackingBean.onModelChange}" process="@form" update=" mtcType , mtcOption " />
+			</p:selectOneMenu>
+			
+			<h:outputLabel for="targetPlant" value="Target Plant" />
+            <p:selectOneMenu id="targetPlant" value="#{eventApplicationBackingBean.m_strTargetPlant}" styleClass="nonEditableDD dd300px" filter="true" filterMatchMode="startsWith" tabindex="5">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpTargetPlant}" />
+				<p:ajax listener="#{eventApplicationBackingBean.onTargetPlantChange}" process="@form" update="model , mtcType , mtcOption " />
+			</p:selectOneMenu>
+			
+			<h:outputLabel for="mtcType" value="MTC Type" />
+            <p:selectManyMenu id="mtcType" value="#{eventApplicationBackingBean.m_strMTCType1}" styleClass="nonEditableDD" filter="true" filterMatchMode="startsWith" tabindex="12">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpMTCType}" />
+				<p:ajax listener="#{eventApplicationBackingBean.onMTCTypeChange}" process="@form" update=" mtcOption " />
+			</p:selectManyMenu>
+			
+			<h:outputLabel for="suppNo" value="Supplier" />
+			<h:panelGroup>
+				<h:inputText id="suppNo" value="#{eventApplicationBackingBean.m_strSupplier}" styleClass="inputBoxMedium" tabindex="6">
+					<p:ajax  event="change" listener="#{eventApplicationBackingBean.onSupplierNumChange}" global="false" process="@form" 
+            		update=":searchEventApplicationForm:suppName" />
+				</h:inputText>
+				<h:inputText id="suppName" value="#{eventApplicationBackingBean.m_strSupplierName}" readonly="true" style="width : 232px ; margin-left:3px" />
+				<p:commandButton value="..." id="suppLookup" actionListener="#{eventApplicationBackingBean.openSupplierLookup(true)}" ajax="true" styleClass="lookupButton" 
+				 update=":suppLookup" oncomplete="PF('suppLookup').show();" tabindex="7"/>
+			</h:panelGroup>
+
+			<h:outputLabel value="MTC Option" />
+            <p:selectOneMenu id="mtcOption" value="#{eventApplicationBackingBean.m_strMTCOption}" styleClass="nonEditableDD" filter="true" filterMatchMode="startsWith" tabindex="13">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpMTCOption}" />
+			</p:selectOneMenu>	
+			
+			<h:outputLabel for="rptCurr" value="Rpt Currency" />
+           	<p:selectOneMenu id="rptCurr" value="#{eventApplicationBackingBean.m_strRPTCurrency}" styleClass="nonEditableDD dd150px" filter="true" filterMatchMode="startsWith">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpRPTCurrency}" />
+			</p:selectOneMenu>
+			
+			<h:outputLabel value="Category" id="categoryLabel" />
+            <p:selectOneMenu id="category" value="#{eventApplicationBackingBean.m_strCategory}" styleClass="nonEditableDD" filter="true" filterMatchMode="startsWith" tabindex="14">
+				<f:selectItems value="#{eventApplicationBackingBean.m_hmpCategory}" />
+			</p:selectOneMenu>	
+			<h:outputLabel value="Is Supply" />
+			<p:selectBooleanCheckbox value="#{eventApplicationBackingBean.m_strIsSupply}" tabindex="15">
+        	</p:selectBooleanCheckbox>
+        	<h:outputLabel value="View MTO's" />
+			<p:selectOneMenu id="viewMTO" value="#{eventApplicationBackingBean.m_strViewMTO}" styleClass="nonEditableDD dd250px" filter="true" filterMatchMode="startsWith" tabindex="16">
+				<f:selectItem itemLabel="Selected App"  itemValue="S"/>
+				<f:selectItem itemLabel="Copy BOM"  itemValue="C"/>
+				<f:selectItem itemLabel="Both Selected App and Copy BOM"  itemValue="B"/>
+			</p:selectOneMenu>
+		</h:panelGrid>
+			<h:panelGrid style="margin: 0 auto;" columns ="1">
+	        <p:defaultCommand target="findNowBtn" />
+		        <h:panelGrid style="margin: 0 auto;" columns ="4">
+			        <p:commandButton value="Find Now" id="findNowBtn" action="#{eventApplicationBackingBean.searchEventApplications}" 
+				   	process="@form" update="@(form),suppName" styleClass="searchTableBtn" tabindex="15"
+				   	oncomplete="isGridEmpty('FIND_NOW'); autoScroll('searchEventApplicationForm' , 'eventApplicationsTable' );"/>
+		        	<p:defaultCommand target="findNowBtn" />
+		        	<p:selectBooleanCheckbox value="#{eventApplicationBackingBean.m_strSpecificSearch}">
+		        	</p:selectBooleanCheckbox>
+				   	<h:outputLabel value="Specific Search" />
+		        </h:panelGrid>
+		    	<p:commandButton value="Clear" id="clearBtn" action="#{eventApplicationBackingBean.clearSearchEventApplicationForm}" update="@(form)" ajax="true" styleClass="searchTableBtn" tabindex="16"/>        	
+	       		<p:commandButton value="Cancel" id="cancelBtn" action="#{eventApplicationBackingBean.cancelSearchEventApplication}" ajax="false" styleClass="searchTableBtn" tabindex="17"/>
+	        </h:panelGrid>
+	        
+        </h:panelGrid>
+        <h:panelGrid columns="25"
+             cellpadding="1"
+             cellspacing="0"
+             style="margin:0 auto; white-space:nowrap;">
+
+    <!-- Qty -->
+     <h:outputLabel for="qtyForSelected" value="Qty"/> 
+			<h:panelGroup>
+				<h:inputText id="qtyForSelected" value="#{eventApplicationBackingBean.m_intQtyForSelected}" styleClass="inputBoxMedium" tabindex="6" 
+				onkeypress = "if(event.which &lt; 48 || event.which &gt; 57 ) if(event.which != 46 || (event.which === 46 &amp;&amp; this.value.split('.').length === 2)) return false;"  disabled="#{eventApplicationBackingBean.m_bolgbEntireEvt}">
+            		<p:ajax event="keyup" listener="#{eventApplicationBackingBean.onQtyOrRateChange}" global="false"></p:ajax>
+            	</h:inputText>
+			</h:panelGroup>
+			<h:outputLabel for="rateForSelected" value="Rate"/>
+			<h:panelGroup>
+				<h:inputText id="rateForSelected" value="#{eventApplicationBackingBean.m_bRateForSelected}" styleClass="inputBoxMedium" tabindex="6" 
+				onkeypress = "if(event.which &lt; 48 || event.which &gt; 57 ) if(event.which != 46 || (event.which === 46 &amp;&amp; this.value.split('.').length === 2)) return false;"  disabled="#{eventApplicationBackingBean.m_bolgbEntireEvt}">
+					<p:ajax event="keyup" listener="#{eventApplicationBackingBean.onQtyOrRateChange}" global="false"></p:ajax>
+            	</h:inputText>
+			</h:panelGroup>
+
+    <!-- Design Section -->
+    <h:outputLabel for="designSectionForSelected"
+               value="Section"/>
+
+<h:panelGroup>
+
+    <p:selectOneMenu id="designSectionForSelected"
+                     value="#{eventApplicationBackingBean.m_strDesignSectionForSelected}"
+                     styleClass="nonEditableDD dd250px"
+                     filter="true"
+                     filterMatchMode="startsWith">
+
+        <f:selectItems value="#{eventApplicationBackingBean.m_hmpDesignSection}" />
+
+    </p:selectOneMenu>
+
+</h:panelGroup>
+
+    <h:outputLabel for="isSupplyForSelected" value="Is Supply"/>
+			<h:panelGroup>
+				<h:inputText id="isSupplyForSelected" value="#{eventApplicationBackingBean.m_strIsSupplyForSelected}" styleClass="inputBoxMedium" tabindex="6" disabled = "true"/>
+			</h:panelGroup>
+        	<p:commandButton value="Apply to Selected" id="applytoselectedBtn" action="#{eventApplicationBackingBean.applyToSelectedButtonClick}" 
+        		ajax="true" styleClass="searchTableBtn" tabindex="16" disabled="#{eventApplicationBackingBean.m_bolgbEntireEvt}" />  
+
+</h:panelGrid>
+    </p:panel>
+
+	<div id="table_div_eventApplicationsTable">
+    <p:dataTable id="eventApplicationsTable" widgetVar="eventApplicationsTable" var="eventApplication" value="#{eventApplicationBackingBean.m_eventApplicationList}" styleClass="eventApp bigDataTable"
+    	selection="#{eventApplicationBackingBean.m_selectedEventApplication}" rowKey="#{eventApplication.compositeKey}"
+    	rows="100" liveResize="true" paginator="true" editMode="cell" editable="true" 
+        paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+        resizableColumns="true" rowsPerPageTemplate="10,50,100" scrollable="true" scrollHeight="250"
+        binding="#{eventApplicationBackingBean.m_dtEventApplicationTable}" >
+        
+        <p:ajax event="rowDblselect" listener="#{eventApplicationBackingBean.openEventApplicationDetails}" />
+        <p:ajax event="cellEdit" listener="#{eventApplicationBackingBean.onEventApplicationsCellEdit}" global="false" 
+        update="eventApplicationsTable, searchEventApplicationForm:applyBtn" />
+        <p:ajax event="sort" oncomplete="updateSortedList();" />
+        <p:ajax event="toggleSelect" listener="#{eventApplicationBackingBean.selectEventApplicationListener}" />
+		<p:ajax event="rowSelectCheckbox" listener="#{eventApplicationBackingBean.selectEventApplicationListener}"/>
+		<p:ajax event="rowUnselectCheckbox" listener="#{eventApplicationBackingBean.selectEventApplicationListener}"/>
+		<p:ajax event="rowSelect" listener="#{eventApplicationBackingBean.selectEventApplicationListener}" global="false"/>
+		<p:column style="display:none" ><h:outputText id="selector"/></p:column>
+        <p:column selectionMode="multiple" style="width:10px;" rendered="#{!eventApplicationBackingBean.m_bolgbEntireEvt}"/>
+        <!--<p:column >
+        <f:facet name="header">
+				<p:selectBooleanCheckbox id="selectAllMappedEntryChk"
+				value="#{eventApplicationBackingBean.m_bSelectAllRecord}">
+				<p:ajax listener="#{eventApplicationBackingBean.handleSelectAllChkBoxListener}" />
+				</p:selectBooleanCheckbox>
+				
+        </f:facet>
+        <p:selectBooleanCheckbox
+				value="#{eventApplication.m_bSelected}" >
+				<p:ajax listener="#{eventApplicationBackingBean.handleIndividualChkBoxListener}" />
+				</p:selectBooleanCheckbox>
+		</p:column>
+        
+		--><p:column headerText="Part Number" sortBy="#{eventApplication.m_strPartNumber}" style="width : 10%">
+            <h:outputText value="#{eventApplication.m_strPartNumber}" />
+        </p:column>
+        <p:column headerText="Part Name" sortBy="#{eventApplication.m_strPartName}">
+            <h:outputText value="#{eventApplication.m_strPartName}" />
+        </p:column>
+        <p:column headerText="Color" sortBy="#{eventApplication.m_strPartColor}" style="width : 40px">
+            <h:outputText value="#{eventApplication.m_strPartColor}" />
+        </p:column>
+        <p:column headerText="Supplier" sortBy="#{eventApplication.m_strSupplierNumber}"  style="width : 50px">
+            <h:outputText value="#{eventApplication.m_strSupplierNumber}" />
+        </p:column>
+        <p:column headerText="Supplier Name" sortBy="#{eventApplication.m_strSupplierName}"  style="width : 100px">
+            <h:outputText value="#{eventApplication.m_strSupplierName}" />
+        </p:column>
+        <!-- Read-only Section column -->
+<p:column headerText="Section"
+          sortBy="#{eventApplication.m_strDesignSection}"
+          rendered="#{eventApplicationBackingBean.m_bolEventFreeze || !eventApplicationBackingBean.m_bolEditableGrid}"
+          style="width : 120px">
+
+    <h:outputText value="#{eventApplication.m_strDesignSection}" />
+
+</p:column>
+
+
+<!-- Editable Section column -->
+<p:column headerText="[Section]"
+          sortBy="#{eventApplication.m_strDesignSection}"
+          rendered="#{!eventApplicationBackingBean.m_bolEventFreeze || eventApplicationBackingBean.m_bolEditableGrid}"
+          style="width : 120px">
+
+    <p:cellEditor>
+
+        <f:facet name="input">
+
+            <p:selectOneMenu id="section"
+                             value="#{eventApplication.m_strDesignSection}"
+                             style="width : 110px"
+                             filter="true"
+                             filterMatchMode="contains"
+                             onfocus="selectClickedRow('eventApplicationsTable');">
+
+                <f:selectItems value="#{eventApplicationBackingBean.m_hmpDesignSection}" />
+
+                <p:ajax event="change"
+                        process="@this"
+                        listener="#{eventApplicationBackingBean.onQtyOrRateChange}"
+                        update=":searchEventApplicationForm:applyBtn"
+                        global="false"/>
+
+            </p:selectOneMenu>
+
+        </f:facet>
+
+        <f:facet name="output">
+            <h:outputText value="#{eventApplication.m_strDesignSection}" />
+        </f:facet>
+
+    </p:cellEditor>
+
+</p:column>
+        <p:column headerText="H.Plant" sortBy="#{eventApplication.m_strHPlant}" style="width : 50px">
+            <h:outputText value="#{eventApplication.m_strHPlant}" />
+        </p:column>
+        <p:column headerText="T.Plant" sortBy="#{eventApplication.m_strTPlant}" style="width : 50px">
+            <h:outputText value="#{eventApplication.m_strTPlant}" />
+        </p:column>
+        <p:column headerText="Model" sortBy="#{eventApplication.m_strModel}" style="width : 50px">
+            <h:outputText value="#{eventApplication.m_strModel}" />
+        </p:column>
+        <p:column headerText="Type" sortBy="#{eventApplication.m_strMTCType}" style="width : 50px">
+            <h:outputText value="#{eventApplication.m_strMTCType}" />
+        </p:column>
+        <p:column headerText="Option" sortBy="#{eventApplication.m_strMTCOption}" >
+            <h:outputText value="#{eventApplication.m_strMTCOption}" />
+        </p:column>
+        <p:column headerText="Grade" sortBy="#{eventApplication.m_strGrade}" >
+            <h:outputText value="#{eventApplication.m_strGrade}" />
+        </p:column>
+        <p:column headerText="MT/AT" sortBy="#{eventApplication.m_strAtMt}" >
+            <h:outputText value="#{eventApplication.m_strAtMt}" />
+        </p:column>
+        <p:column headerText="Category" sortBy="#{eventApplication.m_strCategory}" style="width : 60px" >
+            <h:outputText value="#{eventApplication.m_strCategory}" />
+        </p:column>
+        <p:column headerText="Is Supply" sortBy="#{eventApplication.m_strIsSupply}" style="width : 50px">
+			<h:outputText value="#{eventApplication.m_strIsSupply}" />
+        </p:column>
+        <p:column headerText="Qty" sortBy="#{eventApplication.m_intQuantity}" rendered="#{eventApplicationBackingBean.m_bolEventFreeze || !eventApplicationBackingBean.m_bolEditableGrid}" style="width : 50px">
+			<h:outputText value="#{eventApplication.m_intQuantity}" />
+        </p:column>
+        <p:column headerText="[Qty]" sortBy="#{eventApplication.m_intQuantity}" rendered="#{!eventApplicationBackingBean.m_bolEventFreeze || eventApplicationBackingBean.m_bolEditableGrid}"  style="width : 50px">
+          <p:cellEditor>
+            <f:facet name="input">
+            	<p:inputText id="qty" value="#{eventApplication.m_intQuantity}"  style="width : 40px" maxlength="8"
+            	onkeyup="handleKeyPress(this.id,'eventApplicationsTable');"
+            	onkeypress = "if(event.which &lt; 48 || event.which &gt; 57 ) if(event.which != 46 || (event.which === 46 &amp;&amp; this.value.split('.').length === 2)) return false;"
+            	onblur="onFocusOutFromEditor(this.id);" onfocus="selectClickedRow('eventApplicationsTable');">
+            	</p:inputText>
+            </f:facet>
+            <f:facet name="output">
+            	<h:outputText value="#{eventApplication.m_intQuantity}" />
+            </f:facet>
+           </p:cellEditor>
+        </p:column>
+        <p:column headerText="Rate" sortBy="#{eventApplication.m_intRate}" rendered="#{eventApplicationBackingBean.m_bolEventFreeze || !eventApplicationBackingBean.m_bolEditableGrid}" style="width : 40px">
+			<h:outputText value="#{eventApplication.m_bRate}" >
+			<f:convertNumber pattern="0.00"/>
+			</h:outputText>  
+        </p:column>
+        <p:column headerText="[Rate]" sortBy="#{eventApplication.m_bRate}" rendered="#{!eventApplicationBackingBean.m_bolEventFreeze || eventApplicationBackingBean.m_bolEditableGrid}" style="width : 40px">
+          <p:cellEditor>  
+            <f:facet name="input">
+            	<p:inputText id="rate" value="#{eventApplication.m_bRate}" style="width : 30px" maxlength="3" 
+            	onkeyup="handleKeyPress(this.id,'eventApplicationsTable')"
+            	onkeypress = "if(event.which &lt; 48 || event.which &gt; 57 ) if(event.which != 46 || (event.which === 46 &amp;&amp; this.value.split('.').length === 2)) return false;"
+            	onblur="onFocusOutFromEditor(this.id);" onfocus="selectClickedRow('eventApplicationsTable');">
+            	<f:convertNumber pattern="0.00"/>
+            	</p:inputText>
+            </f:facet>
+            <f:facet name="output">
+            	<h:outputText value="#{eventApplication.m_bRate}" >
+            	<f:convertNumber pattern="0.00"/>
+            	</h:outputText>
+            </f:facet>
+           </p:cellEditor>
+        </p:column>
+        
+         <p:column headerText="Is CopyBOM" sortBy="#{eventApplication.m_strIsCopyBOM}" style="width : 50px">
+			<h:outputText value="#{eventApplication.m_strIsCopyBOM}" />
+        </p:column>
+        
+        <!--<p:column headerText="[Is Supply]" sortBy="#{eventApplication.m_strIsSupply}" rendered="#{eventApplicationBackingBean.m_bolEditableGrid}" style="width : 50px">
+          <p:cellEditor>  
+            <f:facet name="input">
+            	<p:inputText id="issupply" value="#{eventApplication.m_strIsSupply}" style="width : 25px" maxlength="1" 
+            	onkeyup="handleKeyPress(this.id,'eventApplicationsTable')"
+            	onkeypress = "if(event.which === 121 || event.which === 110 || event.which === 89 || event.which === 78){return true;} else if(event.which != 121 || event.which != 110 || || event.which != 89 || event.which != 78){ return false;}"
+            	onblur="onFocusOutFromEditor(this.id);" disabled="true">
+            	</p:inputText>
+            </f:facet>
+            <f:facet name="output">
+            	<h:outputText value="#{eventApplication.m_strIsSupply}" >
+            	</h:outputText>
+            </f:facet>
+           </p:cellEditor>
+        </p:column>-->
+  	</p:dataTable>
+  	
+  	</div>
+ 
+    <h:panelGrid id="buttonsPanel" columns="5"  style="margin: 0 auto !important;">
+    	<h:panelGroup styleClass="bottomRightBtns"> 
+    		<p:commandButton value="Return to CCD" action="#{eventApplicationBackingBean.returnToCcdScreen}"  rendered="#{eventApplicationBackingBean.fromCcdScrn}"/> 			
+    		<p:commandButton value="Copy" id="copyBtn" action="#{eventApplicationBackingBean.copyEventApplication}" 
+    		ajax="true" disabled="#{!eventApplicationBackingBean.m_bolCopyEnabled}" 
+    		rendered="false"/>
+    		<p:commandButton value="Summary" id="summaryBtn" global="false" rendered="#{eventApplicationBackingBean.m_bolSummaryEnabled}" />
+		    <p:commandButton value="Details" id="detailsBtn" action="#{eventApplicationBackingBean.openEventApplicationDetails}" onclick="return isGridEmpty('');" ajax="false" disabled="#{!eventApplicationBackingBean.m_bolDetailsEnabled }" />
+		    <p:commandButton value="Add New" id="addNewBtn" onclick="return addNewClick();" action="#{eventApplicationBackingBean.addNewEventApplication}" ajax="false" disabled="#{!eventApplicationBackingBean.m_bolAddNewEnabled}" />	    
+		    <p:commandButton value="Apply" id="applyBtn"  action = "#{eventApplicationBackingBean.applyButtonClick}"
+		    disabled="#{!eventApplicationBackingBean.m_bolApplyEnabled}" update=":searchEventApplicationForm:messages"
+		    />
+    	</h:panelGroup>
+    </h:panelGrid>
+	</div>
+	<ui:insert name="footer">
+			<ui:include src="footer.xhtml" />
+	</ui:insert>
+	</h:form>
+	<p:dialog id="partLookup" header="Part Search" widgetVar="partLookup" modal="true" height="500" width="700" resizable="false">
+		<h:form id="partLookupDialogForm">
+		<script>
+		$( document ).ready(function() {
+		$("#table_div_partLookupTable").keydown(function(event) {
+		 
+		    if (event.which === 38) {
+		        event.preventDefault();
+		        up('partLookupTable');
+		    }
+
+		    if (event.which === 40) {
+		        event.preventDefault();
+		        down('partLookupTable');
+		    }
+		});
+		
+		
+		});
+		</script>
+		<h:inputHidden id="m_strPartNumberFieldId" value="#{lookupBean.m_strPartNumberFieldId}" />
+		<h:inputHidden id="m_strPartNameFieldId" value="#{lookupBean.m_strPartNameFieldId}" />
+		<h:inputHidden id="m_bolEventBased" value="#{lookupBean.m_bolEventBased}" />
+		<p:messages id="partLookMessages" closable="true"/>
+			<p:panel id="partLookupPanel" header="Part Search" style="margin-bottom:10px;" >
+				<h:panelGrid columns="2" layout="grid" styleClass="searchTable">
+					<p:outputLabel for="pLookupEventName" value="Event Name" rendered="#{!empty lookupBean.m_strEventName}" />
+					<p:inputText id="pLookupEventName" value="#{lookupBean.m_strEventName}" rendered="#{!empty lookupBean.m_strEventName}" />
+					<p:outputLabel for="pLookupRevNo" value="Revision Number" rendered="#{!empty lookupBean.m_decRevNo}" />
+					<p:inputText id="pLookupRevNo" value="#{lookupBean.m_intRevNo}" rendered="#{!empty lookupBean.m_decRevNo}" />
+					<p:outputLabel for="pLookupPartNo" value="Part Number" />
+					<p:inputText id="pLookupPartNo" value="#{lookupBean.m_strPartNo}" />
+					<p:outputLabel for="pLookupPartName" value="Part Name" />
+					<p:inputText id="pLookupPartName" value="#{lookupBean.m_strPartName}" styleClass="inputBoxBig"/>
+				</h:panelGrid>
+			</p:panel>
+			<h:panelGrid columns="2" layout="grid" style="margin: 0 auto;">
+				<p:commandButton value="Find Now" actionListener="#{lookupBean.findParts}" ajax="true" update="partLookupTable , partLookMessages" 
+				oncomplete="autoScroll('partLookupDialogForm' , 'partLookupTable' );"/>
+				<p:commandButton  value="Clear" actionListener="#{lookupBean.clearPartLookup}" ajax="true" update="partLookupPanel , partLookupTable"/>
+			</h:panelGrid>
+			<div id="table_div_partLookupTable">	
+			<p:dataTable id="partLookupTable" widgetVar="partLookupTable" var="part" value="#{lookupBean.m_partLookupList}" styleClass="bigDataTable"
+	    	selectionMode="single" selection="#{lookupBean.m_selectedPartLookupDVO}"  rowKey="#{part.m_strPartNo}" 
+	    	rows="100" liveResize="true" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}" 
+			rowsPerPageTemplate="10,50,100" resizableColumns="true" scrollable="true" scrollHeight="235">
+	        	<p:ajax event="rowDblselect" listener="#{lookupBean.selectPartFromLookup}" oncomplete="PF('partLookup').hide();"/> 
+		        <p:column headerText="Part Number" sortBy="#{part.m_strPartNo}">
+		            <h:outputText value="#{part.m_strPartNo}" />
+		        </p:column>
+		        <p:column headerText="Part Name" sortBy="#{part.m_strPartName}">
+		            <h:outputText value="#{part.m_strPartName}" />
+		        </p:column>
+		        
+		  	</p:dataTable>
+		  	</div>
+			<h:panelGrid columns="2" layout="grid" style="margin: 0 auto;">
+				<p:commandButton value="Ok" actionListener="#{lookupBean.selectPartFromLookup}" ajax="true" oncomplete="PF('partLookup').hide();"/>
+				<p:commandButton  value="Cancel" ajax="true" onclick="PF('partLookup').hide();"/>
+			</h:panelGrid>	
+	</h:form>
+	</p:dialog>
+	<p:dialog id="suppLookup" header="Supplier Search" closable="true"	widgetVar="suppLookup" modal="true" height="500" width="700" resizable="false">
+		<h:form id="suppLookupDialogForm">
+		<script>
+ 			$( document ).ready(function() {
+				$("#table_div_suppLookupTable").keydown(function(event) {
+		 
+				    if (event.which === 38) {
+				        event.preventDefault();
+				        up('suppLookupTable');
+				    }
+		
+				    if (event.which === 40) {
+				        event.preventDefault();
+				        down('suppLookupTable');
+				    }
+				});
+			});
+		
+ 		</script>
+			<p:messages id="suppLookMessages" closable="true"/>
+			<p:panel id="suppLookupPanel" header="Supplier Search" style="margin-bottom:10px;" >
+				<h:panelGrid columns="2" layout="grid" styleClass="searchTable">
+					<p:outputLabel for="sLookupEventName" value="Event Name" />
+					<p:inputText id="sLookupEventName" value="#{lookupBean.m_strEventName}" />
+					<p:outputLabel for="sLookupRevNo" value="Revision Number" />
+					<p:inputText id="sLookupRevNo" value="#{lookupBean.m_intRevNo}" />
+					<p:outputLabel for="sLookupSuppNo" value="Supplier Number" />
+					<p:inputText id="sLookupSuppNo" value="#{lookupBean.m_strSupplierNo}" />
+					<p:outputLabel for="sLookupSuppName" value="Supplier Name" />
+					<p:inputText id="sLookupSuppName" value="#{lookupBean.m_strSupplierName}" />
+				</h:panelGrid>
+			</p:panel>
+			<h:panelGrid columns="2" layout="grid" style="margin: 0 auto;">
+				<p:commandButton value="Find Now" actionListener="#{lookupBean.findSuppliers}" ajax="true" update="suppLookupTable , suppLookMessages"
+				oncomplete="autoScroll('suppLookupDialogForm' , 'suppLookupTable' );"/>
+				<p:commandButton  value="Clear" actionListener="#{lookupBean.clearSupplierLookup}" ajax="true" update="suppLookupPanel , suppLookupTable"/>
+			</h:panelGrid>
+			<div id="table_div_suppLookupTable">	
+			<p:dataTable id="suppLookupTable" widgetVar="suppLookupTable" var="supp" value="#{lookupBean.m_supplierLookupList}" styleClass="bigDataTable"
+	    	selectionMode="single" selection="#{lookupBean.m_selectedSupplierLookupDVO}"  rowKey="#{supp.m_strSupplierNo}" 
+	    	rows="100" liveResize="true" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}" 
+			rowsPerPageTemplate="10,50,100" resizableColumns="true" scrollable="true" scrollHeight="235">
+	        	<p:ajax event="rowDblselect" listener="#{lookupBean.selectSupplierFromLookup}" 
+	        	oncomplete="PF('suppLookup').hide(); document.getElementById('searchEventApplicationForm:suppNo').focus();"/>
+		        <p:column headerText="Supplier Number" sortBy="#{supp.m_strSupplierNo}">
+		            <h:outputText value="#{supp.m_strSupplierNo}" />
+		        </p:column>
+		        <p:column headerText="Supplier Name" sortBy="#{supp.m_strSupplierName}">
+		            <h:outputText value="#{supp.m_strSupplierName}" />
+		        </p:column>
+		  	</p:dataTable>
+		  	</div>
+			<h:panelGrid columns="2" layout="grid" style="margin: 0 auto;">
+				<p:commandButton value="Ok" actionListener="#{lookupBean.selectSupplierFromLookup}" ajax="true" 
+				oncomplete="PF('suppLookup').hide(); document.getElementById('searchEventApplicationForm:suppNo').focus();"/>
+				<p:commandButton  value="Cancel" ajax="true" onclick="PF('suppLookup').hide();"/>
+			</h:panelGrid>	
+		</h:form>
+	</p:dialog>
+	<p:draggable for="confirmDialogApply" />
+	<p:confirmDialog id="confirmDialogApply" message="Are you sure you want to update this record ?"  
+    		header="Confirm" severity="alert" widgetVar="confirmDialogApply" appendTo="@(body)">
+    		<h:panelGrid columns="1" styleClass="buttonGridStyle" > 
+	        <h:panelGroup >   
+	    	<p:commandButton id="confirmApply" value="Yes"  action="#{eventApplicationBackingBean.validateActualEventIsAttachedToBudget}" 
+	    	onclick="PF('confirmDialogApply').hide();"	    	
+	    	 update=":searchEventApplicationForm:eventApplicationsTable,:searchEventApplicationForm:applyBtn,:searchEventApplicationForm:messages"/>	
+	      	<p:commandButton id="declineApply" value="No" onclick="PF('confirmDialogApply').hide();" />
+	      	</h:panelGroup>
+	      	</h:panelGrid>
+    </p:confirmDialog>
+    <p:draggable for="confirmDialogApplyToBudget" />
+	<p:confirmDialog id="confirmDialogApplyToBudget"  message = "#{eventApplicationBackingBean.m_strValidateActualAttachedToBudgetMessage}"
+    		header="Confirm" severity="alert" widgetVar="confirmDialogApplyToBudget" appendTo="@(body)">
+    		<h:panelGrid columns="1" styleClass="buttonGridStyle" > 
+	        <h:panelGroup >   
+	    	<p:commandButton id="confirmApplyToBudget" value="Yes" action="#{eventApplicationBackingBean.applyEventApplicationToActAndBud}" 
+	    	onclick="PF('confirmDialogApplyToBudget').hide();" update=":searchEventApplicationForm:messages"/>	
+	      	<p:commandButton id="declineApplyToBudget" value="No" action="#{eventApplicationBackingBean.applyEventApplication}" 
+	      	onclick="PF('confirmDialogApplyToBudget').hide();" update=":searchEventApplicationForm:messages"/>
+	      	</h:panelGroup>
+	      	</h:panelGrid>
+    </p:confirmDialog>
+    <p:draggable for="confirmDialogBudgetIsFreez" />
+	<p:confirmDialog id="confirmDialogBudgetIsFreez"  message = "#{eventApplicationBackingBean.m_strValidateActualAttachedToBudgetMessage}"
+    		header="Confirm" severity="alert" widgetVar="confirmDialogBudgetIsFreez" appendTo="@(body)">
+    		<h:panelGrid columns="1" styleClass="buttonGridStyle" > 
+	        <h:panelGroup >   
+	    	<p:commandButton id="confirmBudgetIsFreez" value="Close"
+	    	onclick="PF('confirmDialogBudgetIsFreez').hide();" update=":searchEventApplicationForm:messages"/>
+	      	</h:panelGroup>
+	      	</h:panelGrid>
+    </p:confirmDialog>
+    
+    <p:draggable for="confirmDialogApplySel" />
+	<p:confirmDialog id="confirmDialogApplySel" message="Are you sure you want to update selected records ?"  
+    		header="Confirm" severity="alert" widgetVar="confirmDialogApplySel" appendTo="@(body)">
+    		<h:panelGrid columns="1" styleClass="buttonGridStyle" > 
+	        <h:panelGroup >   
+	    	<p:commandButton id="confirmApplySel" value="Yes"  action="#{eventApplicationBackingBean.validateActualEventIsAttachedToBudgetSel}" 
+	    	onclick="PF('confirmDialogApplySel').hide();" update=":searchEventApplicationForm:messages"/>	
+	      	<p:commandButton id="declineApplySel" value="No" onclick="PF('confirmDialogApplySel').hide();" />
+	      	</h:panelGroup>
+	      	</h:panelGrid>
+    </p:confirmDialog>
+    <p:draggable for="confirmDialogApplyToBudgetSel" />
+	<p:confirmDialog id="confirmDialogApplyToBudgetSel"  message = "#{eventApplicationBackingBean.m_strValidateActualAttachedToBudgetMessage}"
+    		header="Confirm" severity="alert" widgetVar="confirmDialogApplyToBudgetSel" appendTo="@(body)">
+    		<h:panelGrid columns="1" styleClass="buttonGridStyle" > 
+	        <h:panelGroup >   
+	    	<p:commandButton id="confirmApplyToBudgetSel" value="Yes" action="#{eventApplicationBackingBean.applyEventApplicationToActAndBudSel}" 
+	    	onclick="PF('confirmDialogApplyToBudgetSel').hide();" update=":searchEventApplicationForm:messages,@(form)"/>	
+	      	<p:commandButton id="declineApplyToBudgetSel" value="No" action="#{eventApplicationBackingBean.applyToSelectedEventApplication}" 
+	      	onclick="PF('confirmDialogApplyToBudgetSel').hide();" update=":searchEventApplicationForm:messages,@(form)"/>
+	      	</h:panelGroup>
+	      	</h:panelGrid>
+    </p:confirmDialog>
+    <p:draggable for="confirmDialogBudgetIsFreezSel" />
+	<p:confirmDialog id="confirmDialogBudgetIsFreezSel"  message = "#{eventApplicationBackingBean.m_strValidateActualAttachedToBudgetMessage}"
+    		header="Confirm" severity="alert" widgetVar="confirmDialogBudgetIsFreezSel" appendTo="@(body)">
+    		<h:panelGrid columns="1" styleClass="buttonGridStyle" > 
+	        <h:panelGroup >   
+	    	<p:commandButton id="confirmBudgetIsFreezSel" value="Close"
+	    	onclick="PF('confirmDialogBudgetIsFreezSel').hide();" update=":searchEventApplicationForm:messages,@(form)"/>
+	      	</h:panelGroup>
+	      	</h:panelGrid>
+    </p:confirmDialog>
+</h:body>
+</html>
