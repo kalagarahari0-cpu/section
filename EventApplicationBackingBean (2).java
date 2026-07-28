@@ -4119,7 +4119,10 @@ public void onModelChange() throws SQLException{
 				m_eventApplicationList.get(event.getRowIndex()).setM_strEditedRowKeyId(String.valueOf(event.getRowIndex()));
 				
 			} else{
-				m_bolApplyEnabled = false;
+				// Only disable Apply if there are no other pending changes tracked
+				if(m_hmpSelectedEventApplicationDetails == null || m_hmpSelectedEventApplicationDetails.size() == 0){
+					m_bolApplyEnabled = false;
+				}
 				RequestContext.getCurrentInstance().update("searchEventApplicationForm:applyBtn");
 			}
 		 logger.debug("\n Exiting onEventApplicationsCellEdit() ");
